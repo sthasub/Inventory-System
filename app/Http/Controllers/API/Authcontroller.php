@@ -51,7 +51,7 @@ class Authcontroller extends Controller
     public function logout(): JsonResponse
     {
         auth()->user()->currentAccessToken()->delete();
-        return response()->json(['logout' => 'Successfully'], 200);
+        return response()->json(['message' => 'logout Successfully'], 200);
     }
 
     public function refreshToken(Request $request):JsonResponse{
@@ -67,14 +67,21 @@ class Authcontroller extends Controller
 
         // Find the token
         $token = PersonalAccessToken::findToken($token);
+
+        //check if token is empty or not OR check the $token is object of User Model or not
         if (empty($token) || !$token->tokenable instanceof User) {
             return response()->json(['message' => 'Token is invalid'], 422);
         }
+
+        // decoding json and getting name of user from User table
         $tokenName = json_decode(auth()->user()->name)->name;
+
+        //delete current token from Personal access token Token table
         auth()->user()->currentAccessToken()->delete();
+
         // Create a new token
         $newToken = auth()->user()->createToken($tokenName)->plainTextToken;
 
-        return response()->json(['status' => 'success', 'data' => ['access_token' => $newToken]]);
+        return response()->json(['status' => 'success', 'data' => ['access_token' => $newToken]],200);
     }
 }
