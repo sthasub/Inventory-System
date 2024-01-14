@@ -21,9 +21,11 @@ class Authcontroller extends Controller
         ]);
         if ($validated->fails()) return response()->json(['error' => "Not valid"], 401);
 
+        //check if one input field is inserted
         if (count($validated->validate()) < 2)
             return response()->json(['error' => 'Empty field']);
 
+        //check if email field is empty then assign value to username
         if (!empty($validated->validated()['email'])) {
             $value = $validated->validated()['email'];
             $key = 'email';
@@ -33,23 +35,31 @@ class Authcontroller extends Controller
         }
 
         try {
+            //get user data as per key and value for example, email key and its value OR username key and its value
             $user = User::where($key, $value)->firstOrFail();
         } catch (ValidationException $e) {
             throw response($e);
         }
-        if (!$user) return response()->json(["error" => "unauthorised"], 401);
+
+        //if not found in the User table then user unauthenticated
+        if (!$user) return response()->json(["error" => "unauthenticated"], 401);
+
+        //create token if all condition passed, and found user in the User table
         $token = $user->createToken($value, ['*'], now()->addMinutes(20))->plainTextToken;
+
 
         return response()->json(["token" => $token], 201);
     }
 
     public function user(): JsonResponse
     {
+        // send User data
         return response()->json(['user' => json_decode(auth()->user()['name'])], 200);
     }
 
     public function logout(): JsonResponse
     {
+        //delete user token in Personal access token
         auth()->user()->currentAccessToken()->delete();
         return response()->json(['message' => 'logout Successfully'], 200);
     }
