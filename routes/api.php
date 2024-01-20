@@ -2,7 +2,7 @@
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\API\Authcontroller;
+use App\Http\Controllers\API\AuthController;
 
 /*
 |--------------------------------------------------------------------------
@@ -15,10 +15,10 @@ use App\Http\Controllers\API\Authcontroller;
 |
 */
 
-Route::middleware('auth:sanctum')->get('user', [Authcontroller::class,'user']);
+Route::middleware('auth:sanctum')->get('user', [AuthController::class,'user']);
 
 
 
-Route::post('login',[Authcontroller::class,'login']);
-Route::middleware('auth:sanctum')->post('logout',[Authcontroller::class,'logout']);
-Route::middleware('auth:sanctum')->get('refreshToken',[Authcontroller::class,'refreshToken']);
+Route::post('login',[AuthController::class,'login']);
+Route::middleware('auth:sanctum')->post('logout',[AuthController::class,'logout']);
+Route::middleware('auth:sanctum')->get('refreshToken',[AuthController::class,'refreshToken']);
