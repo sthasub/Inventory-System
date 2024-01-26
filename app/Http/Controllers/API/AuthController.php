@@ -3,11 +3,15 @@
 namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
+use App\Mail\PasswordResetEmail;
+use App\Models\PasswordResetToken;
 use App\Models\User;
+use App\Utility\Helper;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
 use Laravel\Sanctum\PersonalAccessToken;
@@ -29,17 +33,17 @@ class AuthController extends Controller
         try {
             //get user data as per key and value for example, email key and its value OR username key and its value
             /** @var  User $user */ //Typehint
-            $user = User::query()->where('email',$identity)->orWhere('username',$identity)->firstOrFail();
+            $user = User::query()->where('email', $identity)->orWhere('username', $identity)->firstOrFail();
         } catch (ModelNotFoundException $e) {
-            return response()->json(['error'=>'invalid credentials'],401);
+            return response()->json(['error' => 'invalid credentials'], 401);
         }
 
         //check password
         $status = Hash::check($request->input('password'), $user->password);
-        if(!$status) return response()->json(['error'=>'invalid credentials'],401);
+        if (!$status) return response()->json(['error' => 'invalid credentials'], 401);
 
         //create token if all condition passed, and found user in the User table
-        $token = $user->createToken($request->input('device','firefox'), ['*'], now()->addMinutes(20))->plainTextToken;
+        $token = $user->createToken($request->input('device', 'firefox'), ['*'], now()->addMinutes(20))->plainTextToken;
 
         return response()->json(["token" => $token], 201);
     }
@@ -57,6 +61,26 @@ class AuthController extends Controller
         $user = auth()->user();
         $user->currentAccessToken()->delete();
         return response()->json(['message' => 'logout Successfully'], 200);
+    }
+
+    public function forgetPassword(Request $request): JsonResponse
+    {
+        $validated = Validator::make($request->all(), [
+            'email' => 'required|string|email|exists:users,email',
+        ]);
+
+        if ($validated->fails()) return response()->json(['error' => "Not valid"], 422);
+
+        $token = Helper::getRandomString(40);
+        /** @var  PasswordResetToken $passwordResetToken */
+        $passwordResetToken = PasswordResetToken::query()->create([
+            'email'=>$request->input('email'),
+            'token'=>$token,
+        ]);
+
+        Mail::to($request->input('email'))->send(new PasswordResetEmail($passwordResetToken));
+
+        return response()->json(['message'=>'Successfully send to email']);
     }
 
     public function refreshToken(Request $request): JsonResponse

@@ -20,5 +20,7 @@ Route::middleware('auth:sanctum')->get('user', [AuthController::class,'user']);
 
 
 Route::post('login',[AuthController::class,'login']);
+Route::post('forget-password',[AuthController::class,'forgetPassword']);
+Route::post('reset-password',[AuthController::class,'resetPassword']);
 Route::middleware('auth:sanctum')->post('logout',[AuthController::class,'logout']);
 Route::middleware('auth:sanctum')->get('refreshToken',[AuthController::class,'refreshToken']);
