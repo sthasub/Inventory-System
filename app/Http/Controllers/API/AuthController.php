@@ -18,7 +18,6 @@ use Laravel\Sanctum\PersonalAccessToken;
 
 class AuthController extends Controller
 {
-    private $make;
 
     public function login(Request $request): JsonResponse
     {
@@ -71,7 +70,7 @@ class AuthController extends Controller
             'email' => 'required|string|email|exists:users,email',
         ]);
 
-        if ($validated->fails()) return response()->json(['error' => "Not valid"], 422);
+        if ($validated->fails()) return response()->json(['error' => "Invalid email address"], 422);
 
         $token = Helper::getRandomString(40);
         /** @var  PasswordResetToken $passwordResetToken */
@@ -82,7 +81,7 @@ class AuthController extends Controller
 
         Mail::to($request->input('email'))->send(new PasswordResetEmail($passwordResetToken));
 
-        return response()->json(['message'=>'Successfully send to email']);
+        return response()->json(['message'=>'Successfully send to email. Please check your email']);
     }
 
     public function resetPassword(Request $request):JsonResponse
@@ -103,11 +102,8 @@ class AuthController extends Controller
             return response()->json(['error' => 'invalid token and email'],401);
         }
 
-        $user = User::query()->where(['email'=>$request->input('email')])->limit(1)
+        $user = User::query()->where(['email'=>$request->input('email')])
             ->update(['password'=>Hash::make($request->input('password'))]);
-
-        if($user != 1) return response()->json(['error'=>'server error'], 500);
-
 
         return response()->json(['message'=>'password changed',$reset,"success"=>$user]);
     }
