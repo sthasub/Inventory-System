@@ -44,9 +44,20 @@ class AuthController extends Controller
         if (!$status) return response()->json(['error' => 'invalid credentials'], 401);
 
         //create token if all condition passed, and found user in the User table
-        $token = $user->createToken($request->input('device', 'firefox'), ['*'], now()->addMinutes(20))->plainTextToken;
+        $token = $user->createToken($request->input('device', 'firefox'), ['*'], now()->addDays(2))->plainTextToken;
 
         return response()->json(["token" => $token], 201);
+    }
+
+    public function signUp(Request $request):JsonResponse
+    {
+        $data = $request->all();
+        $data['name'] = [
+            'first_name'=>$request->input('first_name'),
+            'last_name'=>$request->input('last_name')
+        ];
+        User::query()->create($data);
+        return response()->json('201');
     }
 
     public function user(): JsonResponse
